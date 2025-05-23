@@ -1,676 +1,492 @@
+<!--투두리스트 본 페이지: 달력 있고, 할 일 뜨는 페이지-->
+<!--투두리스트 본 페이지: 달력 있고, 할 일 뜨는 페이지-->
 <!DOCTYPE html>
 <html lang="ko">
+
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>투두리스트</title>
-<script src="https://cdn.tailwindcss.com/3.4.16"></script>
-<script>tailwind.config={theme:{extend:{colors:{primary:'#4ade80',secondary:'#a3e635'},borderRadius:{'none':'0px','sm':'4px',DEFAULT:'8px','md':'12px','lg':'16px','xl':'20px','2xl':'24px','3xl':'32px','full':'9999px','button':'8px'}}}}</script>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Pacifico&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/remixicon/4.6.0/remixicon.min.css">
-<style>
-:where([class^="ri-"])::before { content: "\f3c2"; }
-body {
-font-family: 'Pretendard', 'Apple SD Gothic Neo', sans-serif;
-background-color: #f8f9fa;
-}
-.custom-checkbox {
-appearance: none;
-width: 18px;
-height: 18px;
-border: 2px solid #e2e8f0;
-border-radius: 4px;
-position: relative;
-cursor: pointer;
-transition: all 0.2s;
-}
-.custom-checkbox:checked {
-background-color: #4ade80;
-border-color: #4ade80;
-}
-.custom-checkbox:checked::after {
-content: '';
-position: absolute;
-left: 5px;
-top: 2px;
-width: 5px;
-height: 10px;
-border: solid white;
-border-width: 0 2px 2px 0;
-transform: rotate(45deg);
-}
-.task-item:hover .task-actions,
-.category-item:hover .category-actions {
-opacity: 1;
-}
-.task-actions,
-.category-actions {
-opacity: 0;
-transition: opacity 0.2s;
-}
-.calendar-day {
-width: 40px;
-height: 40px;
-display: flex;
-align-items: center;
-justify-content: center;
-border-radius: 50%;
-cursor: pointer;
-transition: all 0.2s;
-}
-.calendar-day:hover {
-background-color: #e6f7ef;
-}
-.calendar-day.active {
-background-color: #4ade80;
-color: white;
-}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>투두리스트</title>
+    <script src="https://cdn.tailwindcss.com/3.4.16"></script>
+    <script>tailwind.config = { theme: { extend: { colors: { primary: '#4ade80', secondary: '#a3e635' }, borderRadius: { 'none': '0px', 'sm': '4px', DEFAULT: '8px', 'md': '12px', 'lg': '16px', 'xl': '20px', '2xl': '24px', '3xl': '32px', 'full': '9999px', 'button': '8px' } } } }</script>
+    <!--디자인을 위한 코드: 삭제하면 안됨-->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Pacifico&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/remixicon/4.6.0/remixicon.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+
+    <!--css코드: 건들지 마세요 (디자인같은거입니다..)-->
+    <style>
+        :where([class^="ri-"])::before {
+            content: "\f3c2";
+        }
+
+        html, body {
+            height: 100%;
+            margin: 0;
+        }
+
+        body {
+            font-family: 'Pretendard', 'Apple SD Gothic Neo', sans-serif;
+            background-color: #f8f9fa;
+            height: 100vh;
+            width: 100vw;
+            min-height: 100vh;
+            min-width: 100vw;
+        }
+
+        .custom-checkbox {
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            border: 2px solid #e2e8f0;
+            border-radius: 4px;
+            position: relative;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .custom-checkbox:checked {
+            background-color: #4ade80;
+            border-color: #4ade80;
+        }
+
+        .custom-checkbox:checked::after {
+            content: '';
+            position: absolute;
+            left: 5px;
+            top: 2px;
+            width: 5px;
+            height: 10px;
+            border: solid white;
+            border-width: 0 2px 2px 0;
+            transform: rotate(45deg);
+        }
+
+        .task-item:hover .task-actions,
+        .category-item:hover .category-actions {
+            opacity: 1;
+        }
+
+        .task-actions,
+        .category-actions {
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        .day {
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        /* 캘린더 위에 마우스 갖다댔을 때 디자인 */
+        .day:hover {
+            background-color: #e6f7ef;
+        }
+
+        /* 캘린더 날짜 선택했을 때 디자인 */
+        .day.active {
+            background-color: #4ade80;
+            color: white;
+        }
+    </style>
 </head>
-<body>
-<div class="flex min-h-screen">
-<!-- 사이드바 -->
-<div class="w-64 border-r border-gray-200 bg-white">
-<div class="p-4 border-b border-gray-200 flex items-center">
-<div class="font-['Pacifico'] text-primary text-xl">logo</div>
-<div class="w-8 h-8 flex items-center justify-center ml-auto">
-<i class="ri-menu-line text-gray-500"></i>
-</div>
-</div>
-<div class="p-4">
-<h2 class="text-sm font-medium text-gray-500 mb-2">카테고리</h2>
-<div class="space-y-1">
-<!-- 마음 카테고리 -->
-<div class="category-item flex items-center px-3 py-2 rounded hover:bg-gray-50">
-<div class="w-6 h-6 flex items-center justify-center mr-2 text-green-500">
-<i class="ri-heart-line"></i>
-</div>
-<span>마음</span>
-<div class="category-actions opacity-0 flex ml-auto">
-<button class="w-6 h-6 flex items-center justify-center text-gray-400 hover:text-gray-600">
-<i class="ri-edit-line"></i>
-</button>
-<button class="w-6 h-6 flex items-center justify-center text-gray-400 hover:text-red-500">
-<i class="ri-delete-bin-line"></i>
-</button>
-</div>
-</div>
-<!-- 공부 카테고리 -->
-<div class="category-item flex items-center px-3 py-2 rounded hover:bg-gray-50">
-<div class="w-6 h-6 flex items-center justify-center mr-2 text-blue-500">
-<i class="ri-book-open-line"></i>
-</div>
-<span>공부</span>
-<div class="category-actions opacity-0 flex ml-auto">
-<button class="w-6 h-6 flex items-center justify-center stext-gray-400 hover:text-gray-600">
-<i class="ri-edit-line"></i>
-</button>
-<button class="w-6 h-6 flex items-center justify-center text-gray-400 hover:text-red-500">
-<i class="ri-delete-bin-line"></i>
-</button>
-</div>
-</div>
 
-<!-- 팀플 카테고리 -->
-<div class="category-item flex items-center px-3 py-2 rounded hover:bg-gray-50">
-<div class="w-6 h-6 flex items-center justify-center mr-2 text-indigo-500">
-<i class="ri-team-line"></i>
-</div>
-<span>팀플</span>
-<div class="category-actions opacity-0 flex ml-auto">
-<button class="w-6 h-6 flex items-center justify-center text-gray-400 hover:text-gray-600">
-<i class="ri-edit-line"></i>
-</button>
-<button class="w-6 h-6 flex items-center justify-center text-gray-400 hover:text-red-500">
-<i class="ri-delete-bin-line"></i>
-</button>
-</div>
-</div>
-<!-- 운동 카테고리 -->
-<div class="category-item flex items-center px-3 py-2 rounded hover:bg-gray-50">
-<div class="w-6 h-6 flex items-center justify-center mr-2 text-orange-500">
-<i class="ri-run-line"></i>
-</div>
-<span>운동</span>
-<div class="category-actions opacity-0 flex ml-auto">
-<button class="w-6 h-6 flex items-center justify-center text-gray-400 hover:text-gray-600">
-<i class="ri-edit-line"></i>
-</button>
-<button class="w-6 h-6 flex items-center justify-center text-gray-400 hover:text-red-500">
-<i class="ri-delete-bin-line"></i>
-</button>
-</div>
-</div>
-<!-- 독서 카테고리 -->
-<div class="category-item flex items-center px-3 py-2 rounded hover:bg-gray-50">
-<div class="w-6 h-6 flex items-center justify-center mr-2 text-purple-500">
-<i class="ri-book-read-line"></i>
-</div>
-<span>독서</span>
-<div class="category-actions opacity-0 flex ml-auto">
-<button class="w-6 h-6 flex items-center justify-center text-gray-400 hover:text-gray-600">
-<i class="ri-edit-line"></i>
-</button>
-<button class="w-6 h-6 flex items-center justify-center text-gray-400 hover:text-red-500">
-<i class="ri-delete-bin-line"></i>
-</button>
-</div>
-</div>
-</div>
-<button class="mt-4 flex items-center text-sm text-gray-600 hover:text-gray-900">
-<div class="w-5 h-5 flex items-center justify-center mr-1">
-<i class="ri-add-line"></i>
-</div>
-<span>카테고리 추가</span>
-</button>
-</div>
-</div>
-<!-- 메인 콘텐츠 -->
-<div class="flex-1 bg-white">
-<div class="p-6">
-<div class="border-b border-gray-200 pb-4 mb-6">
-<h1 class="text-xl font-semibold">투두리스트</h1>
-</div>
-<div class="flex items-center mb-6">
-<h2 class="text-lg font-medium text-gray-900">5/21 오늘의 todo</h2>
-<span class="ml-2 text-sm text-gray-500">13개의 항목</span>
-</div>
-<!-- 카테고리별 투두 대시보드 -->
-<div class="overflow-x-auto pb-4 mb-8">
-<div class="flex gap-4 min-w-max">
-<!-- 운동 카드 -->
-<div class="bg-white border border-gray-200 rounded-lg p-4 shadow-sm h-fit">
-<div class="flex items-center justify-between mb-3">
-<div class="flex items-center">
-<div class="w-6 h-6 flex items-center justify-center mr-2 text-orange-500">
-<i class="ri-run-line"></i>
-</div>
-<h3 class="font-medium">운동</h3>
-</div>
-<span class="text-xs text-gray-500">3개 항목</span>
-</div>
-<ul class="space-y-2">
-<li class="flex items-start">
-<input type="checkbox" class="custom-checkbox mt-1" checked>
-<span class="ml-2 text-sm line-through text-gray-500">아침 조깅 30분</span>
-</li>
-<li class="flex items-start">
-<input type="checkbox" class="custom-checkbox mt-1">
-<span class="ml-2 text-sm">스트레칭 10분</span>
-</li>
-<li class="flex items-start">
-<input type="checkbox" class="custom-checkbox mt-1">
-<span class="ml-2 text-sm">근력 운동 20분</span>
-</li>
-</ul>
-<div class="flex items-center justify-center mt-3">
-<button class="text-sm text-gray-500 hover:text-primary flex items-center">
-<div class="w-4 h-4 flex items-center justify-center mr-1">
-<i class="ri-add-line"></i>
-</div>
-추가하기
-</button>
-</div>
-</div>
-<!-- 마음 카드 -->
-<div class="bg-white border border-gray-200 rounded-lg p-4 shadow-sm h-fit">
-<div class="flex items-center justify-between mb-3">
-<div class="flex items-center">
-<div class="w-6 h-6 flex items-center justify-center mr-2 text-green-500">
-<i class="ri-heart-line"></i>
-</div>
-<h3 class="font-medium">마음</h3>
-</div>
-<span class="text-xs text-gray-500">2개 항목</span>
-</div>
-<ul class="space-y-2">
-<li class="flex items-start">
-<input type="checkbox" class="custom-checkbox mt-1" checked>
-<span class="ml-2 text-sm line-through text-gray-500">명상 10분 하기</span>
-</li>
-<li class="flex items-start">
-<input type="checkbox" class="custom-checkbox mt-1">
-<span class="ml-2 text-sm">감사일기 작성하기</span>
-</li>
-</ul>
-<div class="flex items-center justify-center mt-3">
-<button class="text-sm text-gray-500 hover:text-primary flex items-center">
-<div class="w-4 h-4 flex items-center justify-center mr-1">
-<i class="ri-add-line"></i>
-</div>
-추가하기
-</button>
-</div>
-</div>
-<!-- 공부 카드 -->
-<div class="bg-white border border-gray-200 rounded-lg p-4 shadow-sm h-fit">
-<div class="flex items-center justify-between mb-3">
-<div class="flex items-center">
-<div class="w-6 h-6 flex items-center justify-center mr-2 text-blue-500">
-<i class="ri-book-open-line"></i>
-</div>
-<h3 class="font-medium">공부</h3>
-</div>
-<span class="text-xs text-gray-500">5개 항목</span>
-</div>
-<ul class="space-y-2">
-<li class="flex items-start">
-<input type="checkbox" class="custom-checkbox mt-1" checked>
-<span class="ml-2 text-sm line-through text-gray-500">프로그래밍 강의 듣기</span>
-</li>
-<li class="flex items-start">
-<input type="checkbox" class="custom-checkbox mt-1">
-<span class="ml-2 text-sm">영어 단어 30개 외우기</span>
-</li>
-<li class="flex items-start">
-<input type="checkbox" class="custom-checkbox mt-1">
-<span class="ml-2 text-sm">알고리즘 문제 풀기</span>
-</li>
-<li class="flex items-start">
-<input type="checkbox" class="custom-checkbox mt-1">
-<span class="ml-2 text-sm">포트폴리오 계획 세우기</span>
-</li>
-<li class="flex items-start">
-<input type="checkbox" class="custom-checkbox mt-1">
-<span class="ml-2 text-sm">CS 공부하기</span>
-</li>
-</ul>
-<div class="flex items-center justify-center mt-3">
-<button class="text-sm text-gray-500 hover:text-primary flex items-center">
-<div class="w-4 h-4 flex items-center justify-center mr-1">
-<i class="ri-add-line"></i>
-</div>
-추가하기
-</button>
-</div>
-</div>
-<!-- 독서 카드 -->
-<div class="bg-white border border-gray-200 rounded-lg p-4 shadow-sm h-fit w-[300px]">
-<div class="flex items-center justify-between mb-3">
-<div class="flex items-center">
-<div class="w-6 h-6 flex items-center justify-center mr-2 text-purple-500">
-<i class="ri-book-read-line"></i>
-</div>
-<h3 class="font-medium">독서</h3>
-</div>
-<span class="text-xs text-gray-500">3개 항목</span>
-</div>
-<ul class="space-y-2">
-<li class="flex items-start">
-<input type="checkbox" class="custom-checkbox mt-1" checked>
-<span class="ml-2 text-sm line-through text-gray-500">아침 독서 30분</span>
-</li>
-<li class="flex items-start">
-<input type="checkbox" class="custom-checkbox mt-1">
-<span class="ml-2 text-sm">독서 노트 정리하기</span>
-</li>
-<li class="flex items-start">
-<input type="checkbox" class="custom-checkbox mt-1">
-<span class="ml-2 text-sm">새로운 책 선정하기</span>
-</li>
-</ul>
-<div class="flex items-center justify-center mt-3">
-<button class="text-sm text-gray-500 hover:text-primary flex items-center">
-<div class="w-4 h-4 flex items-center justify-center mr-1">
-<i class="ri-add-line"></i>
-</div>
-추가하기
-</button>
-</div>
-</div>
+<body class="h-full w-full min-h-screen min-w-full">
+    <div class="flex min-h-screen h-full w-full">
+        <!--사이드바-->
+        <div class="w-64 border-r border-gray-200 bg-white flex-shrink-0 flex flex-col">
+            <div class="p-4 border-b border-gray-200 flex items-center">
+                <div class="font-['Pacifico'] text-primary text-xl">logo</div>
+                <div class="w-8 h-8 flex items-center justify-center ml-auto">
+                    <i class="ri-menu-line text-gray-500"></i>
+                </div>
+            </div>
 
-<!-- 팀플 카드 -->
-<div class="bg-white border border-gray-200 rounded-lg p-4 shadow-sm h-fit w-[300px]">
-<div class="flex items-center justify-between mb-3">
-<div class="flex items-center">
-<div class="w-6 h-6 flex items-center justify-center mr-2 text-indigo-500">
-<i class="ri-team-line"></i>
-</div>
-<h3 class="font-medium">팀플</h3>
-</div>
-<span class="text-xs text-gray-500">4개 항목</span>
-</div>
-<ul class="space-y-2">
-<li class="flex items-start">
-<input type="checkbox" class="custom-checkbox mt-1" checked>
-<span class="ml-2 text-sm line-through text-gray-500">팀 회의 참석</span>
-</li>
-<li class="flex items-start">
-<input type="checkbox" class="custom-checkbox mt-1">
-<span class="ml-2 text-sm">발표자료 준비</span>
-</li>
-<li class="flex items-start">
-<input type="checkbox" class="custom-checkbox mt-1">
-<span class="ml-2 text-sm">팀원 피드백 정리</span>
-</li>
-<li class="flex items-start">
-<input type="checkbox" class="custom-checkbox mt-1">
-<span class="ml-2 text-sm">다음 일정 조율하기</span>
-</li>
-</ul>
-<div class="flex items-center justify-center mt-3">
-<button class="text-sm text-gray-500 hover:text-primary flex items-center">
-<div class="w-4 h-4 flex items-center justify-center mr-1">
-<i class="ri-add-line"></i>
-</div>
-추가하기
-</button>
-</div>
-</div>
-</div>
-</div>
-<!-- 캘린더 및 일일 투두 -->
-<div class="grid grid-cols-2 gap-6 mt-8">
-<!-- 캘린더 -->
-<div class="bg-white border border-gray-200 rounded-lg p-5 shadow-sm">
-<div class="flex justify-between items-center mb-4">
-<h3 class="font-medium">5월 2025</h3>
-<div class="flex">
-<button class="w-8 h-8 flex items-center justify-center text-gray-500 hover:text-gray-900 !rounded-button">
-<i class="ri-arrow-left-s-line"></i>
-</button>
-<button class="w-8 h-8 flex items-center justify-center text-gray-500 hover:text-gray-900 !rounded-button">
-<i class="ri-arrow-right-s-line"></i>
-</button>
-</div>
-</div>
-<div class="grid grid-cols-7 gap-1 mb-2">
-<div class="text-center text-sm font-medium text-gray-600">SUN</div>
-<div class="text-center text-sm font-medium text-gray-600">MON</div>
-<div class="text-center text-sm font-medium text-gray-600">TUE</div>
-<div class="text-center text-sm font-medium text-gray-600">WED</div>
-<div class="text-center text-sm font-medium text-gray-600">THU</div>
-<div class="text-center text-sm font-medium text-gray-600">FRI</div>
-<div class="text-center text-sm font-medium text-gray-600">SAT</div>
-</div>
-<div class="grid grid-cols-7 gap-1">
-<!-- 1주차 -->
-<div class="flex justify-center">
-<div class="calendar-day text-gray-400">27</div>
-</div>
-<div class="flex justify-center">
-<div class="calendar-day text-gray-400">28</div>
-</div>
-<div class="flex justify-center">
-<div class="calendar-day text-gray-400">29</div>
-</div>
-<div class="flex justify-center">
-<div class="calendar-day text-gray-400">30</div>
-</div>
-<div class="flex justify-center">
-<div class="calendar-day bg-white">1</div>
-</div>
-<div class="flex justify-center">
-<div class="calendar-day bg-white">2</div>
-</div>
-<div class="flex justify-center">
-<div class="calendar-day bg-white">3</div>
-</div>
-<!-- 2주차 -->
-<div class="flex justify-center">
-<div class="calendar-day bg-white">4</div>
-</div>
-<div class="flex justify-center">
-<div class="calendar-day bg-white">5</div>
-</div>
-<div class="flex justify-center">
-<div class="calendar-day bg-white">6</div>
-</div>
-<div class="flex justify-center">
-<div class="calendar-day bg-white">7</div>
-</div>
-<div class="flex justify-center">
-<div class="calendar-day bg-white">8</div>
-</div>
-<div class="flex justify-center">
-<div class="calendar-day bg-white">9</div>
-</div>
-<div class="flex justify-center">
-<div class="calendar-day bg-white">10</div>
-</div>
-<!-- 3주차 -->
-<div class="flex justify-center">
-<div class="calendar-day bg-white">11</div>
-</div>
-<div class="flex justify-center">
-<div class="calendar-day bg-white">12</div>
-</div>
-<div class="flex justify-center">
-<div class="calendar-day bg-white">13</div>
-</div>
-<div class="flex justify-center">
-<div class="calendar-day bg-white">14</div>
-</div>
-<div class="flex justify-center">
-<div class="calendar-day bg-white">15</div>
-</div>
-<div class="flex justify-center">
-<div class="calendar-day bg-white">16</div>
-</div>
-<div class="flex justify-center">
-<div class="calendar-day bg-white">17</div>
-</div>
-<!-- 4주차 -->
-<div class="flex justify-center">
-<div class="calendar-day bg-white">18</div>
-</div>
-<div class="flex justify-center">
-<div class="calendar-day bg-white">19</div>
-</div>
-<div class="flex justify-center">
-<div class="calendar-day active bg-primary text-white">20</div>
-</div>
-<div class="flex justify-center">
-<div class="calendar-day today border-2 border-primary/30 bg-white">21</div>
-</div>
-<div class="flex justify-center">
-<div class="calendar-day bg-white">22</div>
-</div>
-<div class="flex justify-center">
-<div class="calendar-day bg-white">23</div>
-</div>
-<div class="flex justify-center">
-<div class="calendar-day bg-white">24</div>
-</div>
-<!-- 5주차 -->
-<div class="flex justify-center">
-<div class="calendar-day bg-white">25</div>
-</div>
-<div class="flex justify-center">
-<div class="calendar-day bg-white">26</div>
-</div>
-<div class="flex justify-center">
-<div class="calendar-day bg-white">27</div>
-</div>
-<div class="flex justify-center">
-<div class="calendar-day bg-white">28</div>
-</div>
-<div class="flex justify-center">
-<div class="calendar-day bg-white">29</div>
-</div>
-<div class="flex justify-center">
-<div class="calendar-day bg-white">30</div>
-</div>
-<div class="flex justify-center">
-<div class="calendar-day bg-white">31</div>
-</div>
-</div>
-</div>
-<!-- 일일 투두 -->
-<div class="bg-white border border-gray-200 rounded-lg p-5 shadow-sm">
-<div class="flex justify-between items-center mb-4">
-<h3 class="font-medium">5/20</h3>
-<span class="text-xs text-gray-500">10개의 항목</span>
-</div>
-<!-- 마음 카테고리 -->
-<div class="mb-5">
-<div class="flex items-center justify-between mb-2">
-<h4 class="text-sm font-medium text-green-500">마음</h4>
-<button class="text-sm text-gray-500 hover:text-primary flex items-center !rounded-button">
-<div class="w-4 h-4 flex items-center justify-center">
-<i class="ri-add-line"></i>
-</div>
-</button>
-</div>
-<ul class="space-y-2">
-<li class="task-item flex items-center justify-between">
-<div class="flex items-center">
-<input type="checkbox" class="custom-checkbox">
-<span class="ml-2 text-sm">명상 10분 하기</span>
-</div>
-<div class="task-actions flex">
-<button class="w-6 h-6 flex items-center justify-center text-gray-400 hover:text-gray-600">
-<i class="ri-edit-line"></i>
-</button>
-<button class="w-6 h-6 flex items-center justify-center text-gray-400 hover:text-red-500">
-<i class="ri-delete-bin-line"></i>
-</button>
-</div>
-</li>
-<li class="task-item flex items-center justify-between">
-<div class="flex items-center">
-<input type="checkbox" class="custom-checkbox" checked>
-<span class="ml-2 text-sm line-through text-gray-500">감사일기 작성하기</span>
-</div>
-<div class="task-actions flex">
-<button class="w-6 h-6 flex items-center justify-center text-gray-400 hover:text-gray-600">
-<i class="ri-edit-line"></i>
-</button>
-<button class="w-6 h-6 flex items-center justify-center text-gray-400 hover:text-red-500">
-<i class="ri-delete-bin-line"></i>
-</button>
-</div>
-</li>
-</ul>
-</div>
-<!-- 공부 카테고리 -->
-<div class="mb-5">
-<div class="flex items-center justify-between mb-2">
-<h4 class="text-sm font-medium text-blue-500">공부</h4>
-<button class="text-sm text-gray-500 hover:text-primary flex items-center !rounded-button">
-<div class="w-4 h-4 flex items-center justify-center">
-<i class="ri-add-line"></i>
-</div>
-</button>
-</div>
-<ul class="space-y-2">
-<li class="task-item flex items-center justify-between">
-<div class="flex items-center">
-<input type="checkbox" class="custom-checkbox">
-<span class="ml-2 text-sm">프로그래밍 강의 듣기</span>
-</div>
-<div class="task-actions flex">
-<button class="w-6 h-6 flex items-center justify-center text-gray-400 hover:text-gray-600">
-<i class="ri-edit-line"></i>
-</button>
-<button class="w-6 h-6 flex items-center justify-center text-gray-400 hover:text-red-500">
-<i class="ri-delete-bin-line"></i>
-</button>
-</div>
-</li>
-<li class="task-item flex items-center justify-between">
-<div class="flex items-center">
-<input type="checkbox" class="custom-checkbox">
-<span class="ml-2 text-sm">영어 단어 30개 외우기</span>
-</div>
-<div class="task-actions flex">
-<button class="w-6 h-6 flex items-center justify-center text-gray-400 hover:text-gray-600">
-<i class="ri-edit-line"></i>
-</button>
-<button class="w-6 h-6 flex items-center justify-center text-gray-400 hover:text-red-500">
-<i class="ri-delete-bin-line"></i>
-</button>
-</div>
-</li>
-</ul>
-</div>
-<!-- 운동 카테고리 -->
-<div>
-<div class="flex items-center justify-between mb-2">
-<h4 class="text-sm font-medium text-orange-500">운동</h4>
-<button class="text-sm text-gray-500 hover:text-primary flex items-center !rounded-button">
-<div class="w-4 h-4 flex items-center justify-center">
-<i class="ri-add-line"></i>
-</div>
-</button>
-</div>
-<ul class="space-y-2">
-<li class="task-item flex items-center justify-between">
-<div class="flex items-center">
-<input type="checkbox" class="custom-checkbox" checked>
-<span class="ml-2 text-sm line-through text-gray-500">아침 조깅 30분</span>
-</div>
-<div class="task-actions flex">
-<button class="w-6 h-6 flex items-center justify-center text-gray-400 hover:text-gray-600">
-<i class="ri-edit-line"></i>
-</button>
-<button class="w-6 h-6 flex items-center justify-center text-gray-400 hover:text-red-500">
-<i class="ri-delete-bin-line"></i>
-</button>
-</div>
-</li>
-<li class="task-item flex items-center justify-between">
-<div class="flex items-center">
-<input type="checkbox" class="custom-checkbox">
-<span class="ml-2 text-sm">스트레칭 10분</span>
-</div>
-<div class="task-actions flex">
-<button class="w-6 h-6 flex items-center justify-center text-gray-400 hover:text-gray-600">
-<i class="ri-edit-line"></i>
-</button>
-<button class="w-6 h-6 flex items-center justify-center text-gray-400 hover:text-red-500">
-<i class="ri-delete-bin-line"></i>
-</button>
-</div>
-</li>
-</ul>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-// 체크박스 기능
-const checkboxes = document.querySelectorAll('.custom-checkbox');
-checkboxes.forEach(checkbox => {
-checkbox.addEventListener('change', function() {
-const taskText = this.nextElementSibling;
-if (this.checked) {
-taskText.classList.add('line-through', 'text-gray-500');
-} else {
-taskText.classList.remove('line-through', 'text-gray-500');
-}
-});
-});
-// 캘린더 날짜 선택 기능
-const calendarDays = document.querySelectorAll('.calendar-day');
-const todoTitle = document.querySelector('.bg-white.border.border-gray-200.rounded-lg.p-5.shadow-sm h3');
-calendarDays.forEach(day => {
-day.addEventListener('click', function() {
-// 현재 선택된 날짜 클래스 제거
-document.querySelector('.calendar-day.active')?.classList.remove('active', 'bg-primary', 'text-white');
-// 새로 선택한 날짜에 클래스 추가
-this.classList.add('active', 'bg-primary', 'text-white');
-// 오른쪽 대시보드 날짜 업데이트
-const selectedDate = this.textContent;
-todoTitle.textContent = `5/${selectedDate}`;
-});
-});
-// 카테고리 선택 기능
-const categoryItems = document.querySelectorAll('.sidebar .flex.items-center.px-3.py-2');
-categoryItems.forEach(item => {
-item.addEventListener('click', function() {
-// 현재 선택된 카테고리 클래스 제거
-document.querySelector('.sidebar .flex.items-center.px-3.py-2.bg-green-50')?.classList.remove('bg-green-50');
-// 새로 선택한 카테고리에 클래스 추가
-this.classList.add('bg-green-50');
-});
-});
-});
-</script>
+            <!--존재하는 카테고리 목록-->
+            <div class="p-4 flex-1 overflow-y-auto" id="존재하는 카테고리 목록">
+                <h2 class="text-sm font-medium text-gray-500 mb-2">카테고리</h2>
+                <div class="space-y-1">
+
+                    <!--마음 카테고리-->
+                    <div class="category-item flex items-center px-3 py-2 rounded bg-green-50">
+                        <div class="w-6 h-6 flex items-center justify-center mr-2 text-green-500">
+                            <i class="ri-heart-line"></i>
+                        </div>
+                        <span class="text-green-600 font-medium">마음</span>
+                        <div class="category-actions opacity-0 flex ml-auto">
+                            <!--편집버튼-->
+                            <button class="w-6 h-6 flex items-center justify-center text-gray-400 hover:text-gray-600">
+                                <i class="ri-edit-line"></i>
+                            </button>
+                            <!--삭제버튼-->
+                            <button class="w-6 h-6 flex items-center justify-center text-gray-400 hover:text-red-500">
+                                <i class="ri-delete-bin-line"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!--카테고리 추가 버튼-->
+                <button id="addCategoryBtn" class="mt-4 flex items-center text-sm text-gray-600 hover:text-gray-900">
+                    <div class="w-5 h-5 flex items-center justify-center mr-1">
+                        <i class="ri-add-line"></i>
+                    </div>
+                    <span>카테고리 추가</span>
+                </button>
+            </div>
+        </div>
+
+
+        <!--메인콘텐츠-->
+        <div class="flex-1 flex flex-col min-h-0 h-full p-6">
+            <div class="border-b border-gray-200 pb-4 mb-6">
+                <h1 class="text-xl font-semibold">투두리스트</h1>
+            </div>
+            <div class="flex items-center mb-6">
+                <!--**오늘의 날짜 + 남은 할 일 목록**-->
+                <h2 class="text-lg font-medium text-gray-900" id="top-today-todo-date">5/21 오늘의 todo</h2>
+                <span class="ml-2 text-sm text-gray-500" id="today-listnum">13개의 항목</span>
+            </div>
+
+
+                    <!--투두리스트 카테고리 카드-->
+                    <div id="todolist-card-area">
+                        <div class="card bg-white border border-gray-200 rounded-lg p-4 shadow-sm h-fit"
+                            id="todolist-card">
+                            <div class="flex items-center justify-between mb-3">
+                                <div class="flex items-center">
+                                    <div class="w-6 h-6 flex items-center justify-center mr-2 text-orange-500">
+                                        <i class="ri-run-line"></i>
+                                    </div>
+                                    <h3 class="font-medium" id="category">운동</h3>
+                                </div>
+                                <span class="text-xs text-gray-500" id="category-todo-number">3개 항목</span>
+                            </div>
+
+                            <ul class="space-y-2" id="todo">
+                                <li class="flex items-start">
+                                    <input type="checkbox" class="custom-checkbox mt-1" checked>
+                                    <span class="ml-2 text-sm line-through text-gray-500">아침 조깅 30분</span>
+                                </li>
+                            </ul>
+
+                            <div class="flex items-center justify-center mt-3">
+                                <button class="text-sm text-gray-500 hover:text-primary flex items-center">
+                                    <div class="w-4 h-4 flex items-center justify-center mr-1">
+                                        <i class="ri-add-line"></i>
+                                    </div>
+                                    추가하기
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!--이 코드가 캘린더랑 일일 투두 나란히 띄워주고 있으니 삭제하면 안돼요!-->
+            <div class="flex-1 min-h-0 flex flex-col">
+                <div class="grid grid-cols-2 gap-6 h-full min-h-0 flex-1">
+                    <!-- 캘린더 -->
+                    <div class="h-full flex flex-col min-h-0">
+                        <div class="bg-white border border-gray-200 rounded-lg p-5 shadow-sm flex-1 flex flex-col min-h-0">
+                            <!--캘린더 상단부분-->
+                            <div class="flex justify-between items-center mb-4">
+                                <!--🔴 달력 위에 날짜 연도 띄우는거: 동적으로 해야합니다.-->
+                                <!--🔵구현했습니다.-->
+                                <h3 class="font-medium" id="calendertop-date">5월 2025</h3>
+                                <div class="flex">
+                                    <!-- 🔴 달력 이전 버튼: id="lastmonth-button": 바뀌게 연동-->
+                                    <!--🔵구현했습니다.-->
+                                    <button
+                                        class="w-8 h-8 flex items-center justify-center text-gray-500 hover:text-gray-900 !rounded-button"
+                                        id="lastmonth-button">
+                                        <i class="ri-arrow-left-s-line"></i>
+                                    </button>
+
+                                    <!--🔴 달력 이후 버튼: id"nextmonth-button": 바뀌게 연동-->
+                                    <!--🔵구현했습니다.-->
+                                    <button
+                                        class="w-8 h-8 flex items-center justify-center text-gray-500 hover:text-gray-900 !rounded-button"
+                                        id="nextmonth-button">
+                                        <i class="ri-arrow-right-s-line"></i>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-7 gap-1 mb-2">
+                                <div class="text-center text-sm font-medium text-gray-600">SUN</div>
+                                <div class="text-center text-sm font-medium text-gray-600">MON</div>
+                                <div class="text-center text-sm font-medium text-gray-600">TUE</div>
+                                <div class="text-center text-sm font-medium text-gray-600">WED</div>
+                                <div class="text-center text-sm font-medium text-gray-600">THU</div>
+                                <div class="text-center text-sm font-medium text-gray-600">FRI</div>
+                                <div class="text-center text-sm font-medium text-gray-600">SAT</div>
+                            </div>
+
+                            <!--캘린더: 그리드 컨테이너로 열7개, gap은1씩 주게되어있는 디자인입니다. 7은 건들지 말고, 간격 띄우고 싶으면 1만 움직이세요-->
+                            <div class="grid grid-cols-7 gap-1 flex-1 min-h-0" id="달력">
+                                <!--🔴 날짜 이 아래에 동적으로 생성해야해서 전부 지웠습니다.-->
+                                <!-- 1주차예시: 이후 동적으로 생성할 때 참고할 코드이니 지우지 마세요 -->
+                                <!-- <div class="flex justify-center">
+                                    <div class="calendar-day text-gray-400">27</div>
+                                    </div> -->
+                                <!--🔵 날짜 동적으로 생성하는건 끝냈습니다.-->
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="h-full flex flex-col min-h-0">
+                        <!-- 일일 투두 -->
+                        <div class="bg-white border border-gray-200 rounded-lg p-5 shadow-sm flex-1 flex flex-col min-h-0">
+
+                            <div class="flex justify-between items-center mb-4">
+                                <!--🔴 오늘 날짜: 동적으로 업데이트되게 바꿔야합니다.-->
+                                <!--🔵구현했습니다.-->
+                                <h3 class="font-medium" id="today-todo-date">5/20</h3>
+                                <!--🔴 투데이 할 일 항목 개수: 이거 아마 동적으로 바꿔야할 것 같습니다. 무리면 그냥 빼고요-->
+                                <span class="text-xs text-gray-500">10개의 항목</span>
+                            </div>
+
+                            <!--투두리스트 동적으로 구현하는 것 필요 + DB/파일 등등..쨋든 정보 저장하는 방법 구현 필요-->
+                            <!-- 마음 카테고리 -->
+                            <div class="mb-5">
+                                <div class="flex items-center justify-between mb-2">
+                                    <h4 class="text-sm font-medium text-green-500">마음</h4>
+                                </div>
+                                <ul class="space-y-2">
+                                    <li class="task-item flex items-center justify-between">
+                                        <div class="flex items-center">
+                                            <input type="checkbox" class="custom-checkbox">
+                                            <span class="ml-2 text-sm">명상 10분 하기</span>
+                                        </div>
+                                        <!--🔴 편집 및 삭제 버튼: 눌렀을 때 동작하도록 코딩해야함-->
+                                        <div class="task-actions flex">
+                                            <button
+                                                class="w-6 h-6 flex items-center justify-center text-gray-400 hover:text-gray-600">
+                                                <i class="ri-edit-line"></i>
+                                            </button>
+                                            <button
+                                                class="w-6 h-6 flex items-center justify-center text-gray-400 hover:text-red-500">
+                                                <i class="ri-delete-bin-line"></i>
+                                            </button>
+                                        </div>
+                                    </li>
+                                </ul>
+                            </div>
+                            <!--🔴 아래에 있던 다른 공부/팀플 카테고리 전부 삭제하였습니다: 어차피 카테고리에따라 동적으로 생성해야해서-->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        //이전/이후 > 또는 < 누르면 달력 바뀌게하는 기능
+        const today = new Date();
+        let defaultmonth = today.getMonth() + 1;
+        let defaultyear = 2025;
+        renderCalender(defaultyear, defaultmonth);
+
+        document.getElementById('lastmonth-button').addEventListener('click', function () {
+            defaultmonth--;
+            if (defaultmonth < 1) {
+                defaultmonth = 12;
+                defaultyear--;
+            }
+            renderCalender(defaultyear, defaultmonth);
+        });
+
+        document.getElementById('nextmonth-button').addEventListener('click', function () {
+            defaultmonth++;
+            if (defaultmonth > 12) {
+                defaultmonth = 1;
+                defaultyear++;
+            }
+            renderCalender(defaultyear, defaultmonth);
+        });
+
+        //이전/이후 버튼 누르면 달력 자동으로 만들어지게 하는 함수
+        function renderCalender(year, month) {
+            //달력 가지고 뭐 할거면, 변수는 caldendersection입니다
+            const calendersection = document.getElementById('달력');
+            calendersection.innerHTML = '';
+
+            //
+            const editCalenderTop = document.getElementById('calendertop-date');
+            editCalenderTop.innerHTML = '';
+            editCalenderTop.innerHTML = `<h3 class="font-medium" id="calendertop-date">${month}월 ${year}</h3>`
+
+            const firstDay = new Date(year, month - 1, 1)
+            const lastDay = new Date(year, month, 0)
+
+            const firstWeekDay = firstDay.getDay();
+            const lastMonthLastDay = new Date(year, month - 1, 0).getDate();
+
+            for (let i = firstWeekDay - 1; i >= 0; i--) {
+                const dayDiv = document.createElement('div');
+                dayDiv.className = "flex justify-center";
+                dayDiv.innerHTML = `<div class= "day text-gray-400">${lastMonthLastDay - i}</div>`;
+                calendersection.appendChild(dayDiv);
+            }
+
+            for (let d = 1; d <= lastDay.getDate(); d++) {
+                const dayDiv = document.createElement('div');
+                dayDiv.className = "flex justify-center";
+                dayDiv.innerHTML = `<div class="day bg-white">${d}</div>`;
+                calendersection.appendChild(dayDiv)
+            }
+        }
+        document.addEventListener('DOMContentLoaded', function () {
+
+            // 체크박스 누르면 회색줄가게하는 기능입니다 (디자인적 요소만 있어요)
+            const checkboxes = document.querySelectorAll('.custom-checkbox');
+            checkboxes.forEach(checkbox => {
+                checkbox.addEventListener('change', function () {
+                    const taskText = this.nextElementSibling;
+                    if (this.checked) {
+                        taskText.classList.add('line-through', 'text-gray-500');
+                    }
+                    else {
+                        taskText.classList.remove('line-through', 'text-gray-500');
+                    }
+                });
+            });
+
+            // 캘린더 날짜 선택 기능
+            document.getElementById('달력').addEventListener('click', function (e) {
+                if (e.target.classList.contains('day')) {
+                    document.querySelector('.day.active')?.classList.remove('active', 'bg-primary', 'text-white');
+                    e.target.classList.add('active', 'bg-primary', 'text-white');
+
+                    document.getElementById('today-todo-date').innerHTML = `<h3 class="font-medium" id="today-todo-date">${defaultmonth}/${e.target.textContent}`
+                    document.getElementById('top-today-todo-date').innerHTML = `<h3 class="font-medium" id="today-todo-date">${defaultmonth}/${e.target.textContent}`
+                }
+            });
+
+            // 카테고리 선택 기능
+            const categoryItems = document.querySelectorAll('.sidebar .flex.items-center.px-3.py-2');
+            categoryItems.forEach(item => {
+                item.addEventListener('click', function () {
+                    // 현재 선택된 카테고리 클래스 제거
+                    document.querySelector('.sidebar .flex.items-center.px-3.py-2.bg-green-50')?.classList.remove('bg-green-50');
+                    // 새로 선택한 카테고리에 클래스 추가
+                    this.classList.add('bg-green-50');
+                });
+            });
+        });
+
+        // 투두리스트 카드 동적 생성 예시
+        const todolistcard = document.getElementById('todolist-card-area');
+        todolistcard.innerHTML = `<div class="card bg-white border border-gray-200 rounded-lg p-4 shadow-sm h-fit" id="todolist-card">
+                                    <div class="flex items-center justify-between mb-3">
+                                        <div class="flex items-center">
+                                            <div class="w-6 h-6 flex items-center justify-center mr-2 text-orange-500">
+                                                <i class="ri-run-line"></i>
+                                            </div>
+                                            <h3 class="font-medium" id="category">운동</h3>
+                                        </div>
+                                        <span class="text-xs text-gray-500" id="category-todo-number">3개 항목</span>
+                                    </div>
+                                    <ul class="space-y-2" id="todo"></ul>
+                                        <div class="flex items-center justify-center mt-3">
+                                            <button class="text-sm text-gray-500 hover:text-primary flex items-center" id="addtodo">
+                                                <div class="w-4 h-4 flex items-center justify-center mr-1">
+                                                    <i class="ri-add-line"></i>
+                                                </div>
+                                                추가하기
+                                            </button>
+                                        </div>
+                                </div>`;
+
+        const todoList = [
+            { todo: "아침 조깅 30분", state: true },
+            { todo: "스트레칭 10분", state: false },
+            { todo: "근력 운동 20분", state: false }
+        ];
+
+        const ul = todolistcard.querySelector('#todo');
+        todoList.forEach(item => {
+            ul.innerHTML += `<li class="flex items-start">
+                                <input type="checkbox" class="custom-checkbox mt-1" ${item.state ? "checked" : ""}>
+                                <span class="ml-2 text-sm ${item.state ? "line-through text-gray-500" : ""}">${item.todo}</span>
+                                </li>`;
+        });
+
+
+
+
+        //✅ 카테고리 관련 기능
+        document.addEventListener('DOMContentLoaded', function () {
+            let selectedCategoryItem = document.querySelector('.category-item.bg-green-50');
+
+            function enableCategoryEvents(container) {
+                const editBtn = container.querySelector('.edit-btn');
+                const deleteBtn = container.querySelector('.delete-btn');
+                const nameInput = container.querySelector('.category-name');
+
+                container.addEventListener('click', function () {
+                    if (selectedCategoryItem) {
+                        selectedCategoryItem.classList.remove('bg-green-50');
+                    }
+                    container.classList.add('bg-green-50');
+                    selectedCategoryItem = container;
+                });
+
+                editBtn.addEventListener('click', function (e) {
+                    e.stopPropagation();
+                    nameInput.removeAttribute('readonly');
+                    nameInput.focus();
+                    nameInput.addEventListener('blur', () => {
+                        nameInput.setAttribute('readonly', 'readonly');
+                    }, { once: true });
+                });
+
+                deleteBtn.addEventListener('click', function (e) {
+                    e.stopPropagation();
+                    if (selectedCategoryItem === container) {
+                        selectedCategoryItem = null;
+                    }
+                    container.remove();
+                });
+
+                container.addEventListener('mouseenter', () => {
+                    container.querySelector('.category-actions').classList.remove('opacity-0');
+                });
+                container.addEventListener('mouseleave', () => {
+                    container.querySelector('.category-actions').classList.add('opacity-0');
+                });
+            }
+
+            document.querySelectorAll('.category-item').forEach(enableCategoryEvents);
+
+            document.getElementById('addCategoryBtn').addEventListener('click', function () {
+                const div = document.createElement('div');
+                div.className = 'category-item flex items-center px-3 py-2 rounded hover:bg-gray-50';
+                div.innerHTML = `
+                    <div class="w-6 h-6 flex items-center justify-center mr-2 text-blue-500">
+                        <i class="ri-folder-line"></i>
+                    </div>
+                    <input type="text" class="category-name font-medium bg-transparent focus:outline-none" value="새 카테고리" />
+                    <div class="category-actions opacity-0 flex ml-auto">
+                        <button class="edit-btn w-6 h-6 flex items-center justify-center text-gray-400 hover:text-gray-600">
+                            <i class="ri-edit-line"></i>
+                        </button>
+                        <button class="delete-btn w-6 h-6 flex items-center justify-center text-gray-400 hover:text-red-500">
+                            <i class="ri-delete-bin-line"></i>
+                        </button>
+                    </div>`;
+                document.getElementById('categoryItems').appendChild(div);
+                enableCategoryEvents(div);
+            });
+        });
+
+    </script>
 </body>
 </html>
